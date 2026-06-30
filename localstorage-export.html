@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Exportar localStorage - Compras Estupidas de Elmer.</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5f7fb;
+        --surface: #ffffff;
+        --ink: #151923;
+        --muted: #657081;
+        --line: #dce3ea;
+        --teal: #12877c;
+        --teal-dark: #0d5f58;
+        --rose: #9f2f3d;
+        --shadow: 0 18px 45px rgba(23, 33, 46, 0.09);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .shell {
+        width: min(820px, 100%);
+        margin: 0 auto;
+        padding: 22px;
+      }
+
+      .topbar,
+      .panel {
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+      }
+
+      .topbar {
+        padding: 22px;
+        background: #151923;
+        color: #ffffff;
+      }
+
+      .eyebrow {
+        margin: 0 0 8px;
+        color: #8fd6cf;
+        font-size: 0.82rem;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        margin-bottom: 0;
+        font-size: clamp(2rem, 5vw, 3.7rem);
+        line-height: 0.95;
+      }
+
+      .panel {
+        display: grid;
+        gap: 18px;
+        margin-top: 18px;
+        padding: 18px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+      }
+
+      .status-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .stat {
+        padding: 14px;
+        background: #f7fafb;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      .stat span {
+        display: block;
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .stat strong {
+        display: block;
+        margin-top: 8px;
+        font-size: 2rem;
+        line-height: 1;
+      }
+
+      .message {
+        margin: 0;
+        color: var(--muted);
+        font-weight: 700;
+        line-height: 1.5;
+      }
+
+      .message.error {
+        color: var(--rose);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      button,
+      a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        padding: 0 14px;
+        font: inherit;
+        font-weight: 900;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      .primary {
+        background: var(--teal);
+        color: #ffffff;
+      }
+
+      .primary:hover {
+        background: var(--teal-dark);
+      }
+
+      .secondary {
+        background: #ffffff;
+        color: var(--ink);
+        border-color: var(--line);
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.58;
+      }
+
+      code {
+        padding: 2px 5px;
+        background: #edf2f7;
+        border-radius: 6px;
+      }
+
+      @media (max-width: 620px) {
+        .shell {
+          padding: 12px;
+        }
+
+        .status-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .actions,
+        button,
+        a {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <p class="eyebrow">Herramienta de respaldo</p>
+        <h1>Exportar localStorage</h1>
+      </header>
+
+      <section class="panel" aria-live="polite">
+        <div class="status-grid">
+          <div class="stat">
+            <span>Items encontrados</span>
+            <strong id="itemCount">0</strong>
+          </div>
+          <div class="stat">
+            <span>Origen actual</span>
+            <strong id="sourceType">-</strong>
+          </div>
+        </div>
+
+        <p class="message" id="statusMessage"></p>
+
+        <div class="actions">
+          <button class="primary" id="downloadBtn" type="button">
+            Descargar archivo JSON
+          </button>
+          <button class="secondary" id="copyBtn" type="button">
+            Copiar JSON
+          </button>
+          <a class="secondary" href="index.html">Volver a la app</a>
+        </div>
+
+        <p class="message">
+          Usa este archivo en el mismo navegador y origen donde ves tus datos. Despues abre el sitio publico y usa
+          <code>Importar</code> con el JSON descargado.
+        </p>
+      </section>
+    </main>
+
+    <script>
+      const CATALOG_KEY = "compras-geek-catalogo-v1";
+      const TITLE_KEY = "compras-geek-title-v1";
+      const FILENAME = "catalogo-localstorage-compras-estupidas-de-elmer.json";
+
+      const els = {
+        itemCount: document.querySelector("#itemCount"),
+        sourceType: document.querySelector("#sourceType"),
+        statusMessage: document.querySelector("#statusMessage"),
+        downloadBtn: document.querySelector("#downloadBtn"),
+        copyBtn: document.querySelector("#copyBtn"),
+      };
+
+      function getSourceType() {
+        if (location.protocol === "file:") return "Archivo local";
+        if (location.hostname.includes("github.io")) return "Sitio publico";
+        return "Navegador";
+      }
+
+      function parseItems() {
+        const raw = localStorage.getItem(CATALOG_KEY);
+        if (!raw) return [];
+
+        try {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) return parsed;
+          if (Array.isArray(parsed.items)) return parsed.items;
+          return [];
+        } catch {
+          return [];
+        }
+      }
+
+      function buildBackup() {
+        return {
+          app: "Compras Estupidas de Elmer.",
+          exportedAt: new Date().toISOString(),
+          source: location.href,
+          title: localStorage.getItem(TITLE_KEY) || "",
+          items: parseItems(),
+        };
+      }
+
+      function getBackupJson() {
+        return JSON.stringify(buildBackup(), null, 2);
+      }
+
+      function downloadBackup() {
+        const blob = new Blob([getBackupJson()], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = FILENAME;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
+      async function copyBackup() {
+        try {
+          await navigator.clipboard.writeText(getBackupJson());
+          setMessage("JSON copiado. Puedes guardarlo en un archivo .json si lo necesitas.");
+        } catch {
+          setMessage("No se pudo copiar automaticamente. Usa el boton de descargar.", true);
+        }
+      }
+
+      function setMessage(message, isError = false) {
+        els.statusMessage.textContent = message;
+        els.statusMessage.classList.toggle("error", isError);
+      }
+
+      function render() {
+        const items = parseItems();
+
+        els.itemCount.textContent = items.length;
+        els.sourceType.textContent = getSourceType();
+        els.downloadBtn.disabled = !items.length;
+        els.copyBtn.disabled = !items.length;
+
+        if (items.length) {
+          setMessage(`Listo. Encontre ${items.length} item${items.length === 1 ? "" : "s"} para exportar.`);
+          return;
+        }
+
+        setMessage(
+          "No encontre items en este localStorage. Abre este archivo desde el mismo lugar donde si ves tu catalogo.",
+          true
+        );
+      }
+
+      els.downloadBtn.addEventListener("click", downloadBackup);
+      els.copyBtn.addEventListener("click", copyBackup);
+      render();
+    </script>
+  </body>
+</html>

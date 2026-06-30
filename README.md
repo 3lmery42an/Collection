@@ -20,6 +20,10 @@ Para moverlos:
 4. Presiona `Importar` y selecciona el archivo JSON descargado.
 5. Acepta reemplazar el catalogo si quieres que quede igual.
 
+Tambien puedes usar la herramienta de localStorage:
+
+https://3lmery42an.github.io/compras-estupidas-de-elmer/localstorage-export.html
+
 ## Funciones
 
 - Agregar items pendientes o conseguidos.

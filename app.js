@@ -889,6 +889,9 @@ function importData(file) {
 
       const replace = confirm("Importar reemplazando el catalogo actual?");
       state.items = replace ? imported : [...imported, ...state.items];
+      if (!Array.isArray(parsed) && parsed.title) {
+        setAppTitle(parsed.title);
+      }
       saveItems();
       render();
     } catch (error) {
