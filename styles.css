@@ -566,6 +566,7 @@ textarea:focus {
 }
 
 .image-drop-zone {
+  position: relative;
   display: grid;
   min-height: 96px;
   width: 100%;
@@ -577,12 +578,22 @@ textarea:focus {
   border-radius: 8px;
   font-weight: 900;
   text-align: center;
+  cursor: pointer;
 }
 
 .image-drop-zone:hover,
 .image-drop-zone.drag-over {
   background: #eefaf7;
   border-color: var(--teal);
+}
+
+.image-drop-zone input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .google-photo-panel {

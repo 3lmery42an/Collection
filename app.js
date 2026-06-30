@@ -1403,8 +1403,6 @@ els.imageFile.addEventListener("change", async () => {
 els.galleryFile.addEventListener("change", async () => {
   processImageFile(els.galleryFile.files[0], "Foto de galeria lista.");
 });
-els.galleryPhotoBtn.addEventListener("click", () => els.galleryFile.click());
-els.imageDropZone.addEventListener("click", () => els.galleryFile.click());
 els.imageDropZone.addEventListener("dragover", (event) => {
   event.preventDefault();
   els.imageDropZone.classList.add("drag-over");
