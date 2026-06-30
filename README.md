@@ -2,6 +2,12 @@
 
 Catalogo personal para organizar comics, mangas, figuras y otras compras futuras.
 
+## Sitio web
+
+Abre la app aqui:
+
+https://3lmery42an.github.io/compras-estupidas-de-elmer/
+
 ## Funciones
 
 - Agregar items pendientes o conseguidos.
