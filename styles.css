@@ -355,13 +355,15 @@ textarea:focus {
   flex-wrap: wrap;
 }
 
-.format-picker {
+.format-picker,
+.reading-picker {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.format-picker button {
+.format-picker button,
+.reading-picker button {
   min-height: 36px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -372,13 +374,15 @@ textarea:focus {
   font-weight: 800;
 }
 
-.format-picker button.active {
+.format-picker button.active,
+.reading-picker button.active {
   background: var(--ink);
   color: #ffffff;
   border-color: var(--ink);
 }
 
-.format-picker button:hover {
+.format-picker button:hover,
+.reading-picker button:hover {
   transform: translateY(-1px);
 }
 
@@ -660,7 +664,8 @@ textarea:focus {
 .type-badge,
 .status-pill,
 .priority-pill,
-.format-pill {
+.format-pill,
+.reading-pill {
   display: inline-flex;
   align-items: center;
   min-height: 26px;
@@ -740,6 +745,21 @@ textarea:focus {
   background: #fff0c4;
 }
 
+.reading-pill.unread {
+  color: #5a6170;
+  background: #eef1f5;
+}
+
+.reading-pill.queued {
+  color: #745000;
+  background: #ffefc7;
+}
+
+.reading-pill.read {
+  color: #075d55;
+  background: #dff5f1;
+}
+
 .meta-line,
 .price-line,
 .note-line {
@@ -770,7 +790,8 @@ textarea:focus {
   margin-top: 8px;
 }
 
-.card-actions .toggle-status {
+.card-actions .toggle-status,
+.card-actions .toggle-reading {
   grid-column: 1 / -1;
 }
 

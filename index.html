@@ -76,6 +76,7 @@
             <form id="itemForm" class="item-form">
               <input id="itemId" type="hidden" />
               <input id="format" name="format" type="hidden" value="paperback" />
+              <input id="readingStatus" name="readingStatus" type="hidden" value="unread" />
               <input id="imageData" name="imageData" type="hidden" />
 
               <label>
@@ -134,6 +135,15 @@
                   <button type="button" data-format="tankobon">Tankobon</button>
                   <button type="button" data-format="scale112">1/12</button>
                   <button type="button" data-format="statue">Estatua</button>
+                </div>
+              </div>
+
+              <div class="field-group" id="readingGroup">
+                <span>Lectura</span>
+                <div class="reading-picker" id="readingPicker" aria-label="Estado de lectura">
+                  <button class="active" type="button" data-reading="unread">No leido</button>
+                  <button type="button" data-reading="queued">Por leer</button>
+                  <button type="button" data-reading="read">Leido</button>
                 </div>
               </div>
 
@@ -278,6 +288,7 @@
             <span class="status-pill"></span>
             <span class="priority-pill"></span>
             <span class="format-pill"></span>
+            <span class="reading-pill"></span>
           </div>
           <h3></h3>
           <p class="meta-line"></p>
@@ -285,6 +296,7 @@
           <p class="note-line"></p>
           <div class="card-actions">
             <button class="secondary-btn toggle-status" type="button"></button>
+            <button class="secondary-btn toggle-reading" type="button"></button>
             <button class="secondary-btn edit-item" type="button">Editar</button>
             <button class="danger-btn delete-item" type="button">Eliminar</button>
           </div>

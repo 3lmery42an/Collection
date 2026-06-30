@@ -14,6 +14,12 @@ const statusLabels = {
   owned: "Conseguido",
 };
 
+const readingLabels = {
+  unread: "No leido",
+  queued: "Por leer",
+  read: "Leido",
+};
+
 const priorityLabels = {
   high: "Alta",
   medium: "Media",
@@ -61,6 +67,7 @@ const seedItems = [
     title: "Batman: Year One",
     type: "comic",
     status: "wishlist",
+    readingStatus: "queued",
     priority: "high",
     format: "paperback",
     price: 18.99,
@@ -76,6 +83,7 @@ const seedItems = [
     title: "One Piece Vol. 1",
     type: "manga",
     status: "wishlist",
+    readingStatus: "unread",
     priority: "medium",
     format: "tankobon",
     price: 11.99,
@@ -91,6 +99,7 @@ const seedItems = [
     title: "Spider-Man 1/12",
     type: "figure",
     status: "owned",
+    readingStatus: "",
     priority: "low",
     format: "scale112",
     price: 34.99,
@@ -127,6 +136,9 @@ const els = {
   priority: document.querySelector("#priority"),
   format: document.querySelector("#format"),
   formatPicker: document.querySelector("#formatPicker"),
+  readingStatus: document.querySelector("#readingStatus"),
+  readingPicker: document.querySelector("#readingPicker"),
+  readingGroup: document.querySelector("#readingGroup"),
   price: document.querySelector("#price"),
   series: document.querySelector("#series"),
   store: document.querySelector("#store"),
@@ -262,6 +274,38 @@ function renderFormatPicker() {
 function setFormat(value) {
   els.format.value = formatLabels[value] ? value : getDefaultFormat(els.type.value);
   renderFormatPicker();
+}
+
+function isReadableType(type) {
+  return ["comic", "manga"].includes(type);
+}
+
+function normalizeReadingStatus(value, type) {
+  if (!isReadableType(type)) return "";
+  return readingLabels[value] ? value : "unread";
+}
+
+function renderReadingPicker() {
+  const canTrackReading = isReadableType(els.type.value);
+  els.readingGroup.hidden = !canTrackReading;
+
+  if (!canTrackReading) {
+    els.readingStatus.value = "";
+    return;
+  }
+
+  if (!readingLabels[els.readingStatus.value]) {
+    els.readingStatus.value = "unread";
+  }
+
+  els.readingPicker.querySelectorAll("button[data-reading]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.reading === els.readingStatus.value);
+  });
+}
+
+function setReadingStatus(value) {
+  els.readingStatus.value = normalizeReadingStatus(value, els.type.value);
+  renderReadingPicker();
 }
 
 function setExternalPhotoStatus(message) {
@@ -469,13 +513,16 @@ function openGoogleImages() {
 }
 
 function normalizeItem(item) {
+  const type = ["comic", "manga", "figure"].includes(item.type) ? item.type : "comic";
+
   return {
     id: item.id || createId(),
     title: String(item.title || "").trim(),
-    type: ["comic", "manga", "figure"].includes(item.type) ? item.type : "comic",
+    type,
     status: ["wishlist", "owned"].includes(item.status) ? item.status : "wishlist",
+    readingStatus: normalizeReadingStatus(item.readingStatus, type),
     priority: ["", "high", "medium", "low"].includes(item.priority) ? item.priority : "",
-    format: formatLabels[item.format] ? item.format : getDefaultFormat(item.type),
+    format: formatLabels[item.format] ? item.format : getDefaultFormat(type),
     price: Number(item.price || 0),
     series: String(item.series || "").trim(),
     store: String(item.store || "").trim(),
@@ -500,6 +547,7 @@ function getVisibleItems() {
         item.notes,
         typeLabels[item.type],
         statusLabels[item.status],
+        readingLabels[item.readingStatus],
         formatLabels[item.format],
       ]
         .join(" ")
@@ -563,11 +611,13 @@ function renderCatalog() {
     const statusPill = card.querySelector(".status-pill");
     const priorityPill = card.querySelector(".priority-pill");
     const formatPill = card.querySelector(".format-pill");
+    const readingPill = card.querySelector(".reading-pill");
     const title = card.querySelector("h3");
     const meta = card.querySelector(".meta-line");
     const price = card.querySelector(".price-line");
     const note = card.querySelector(".note-line");
     const toggleButton = card.querySelector(".toggle-status");
+    const toggleReadingButton = card.querySelector(".toggle-reading");
     const editButton = card.querySelector(".edit-item");
     const deleteButton = card.querySelector(".delete-item");
 
@@ -590,6 +640,9 @@ function renderCatalog() {
     formatPill.textContent = formatLabels[item.format] || "";
     formatPill.hidden = !formatLabels[item.format];
     if (item.format) formatPill.classList.add(item.format);
+    readingPill.textContent = readingLabels[item.readingStatus] || "";
+    readingPill.hidden = !isReadableType(item.type);
+    if (item.readingStatus) readingPill.classList.add(item.readingStatus);
     title.textContent = item.title;
     meta.textContent = [item.series, item.store, item.acquiredDate ? `Conseguido: ${item.acquiredDate}` : ""]
       .filter(Boolean)
@@ -599,6 +652,9 @@ function renderCatalog() {
 
     toggleButton.textContent = item.status === "owned" ? "Volver a pendiente" : "Marcar conseguido";
     toggleButton.addEventListener("click", () => toggleStatus(item.id));
+    toggleReadingButton.hidden = !isReadableType(item.type);
+    toggleReadingButton.textContent = getReadingButtonLabel(item.readingStatus);
+    toggleReadingButton.addEventListener("click", () => toggleReadingStatus(item.id));
     editButton.addEventListener("click", () => editItem(item.id));
     deleteButton.addEventListener("click", () => deleteItem(item.id));
 
@@ -618,6 +674,7 @@ function resetForm() {
   els.formTitle.textContent = "Nuevo item";
   els.cancelEditBtn.hidden = true;
   els.status.value = "wishlist";
+  setReadingStatus("unread");
   els.priority.value = "";
   setFormat(getDefaultFormat(els.type.value));
   applyGoogleConfig();
@@ -637,6 +694,7 @@ async function handleSubmit(event) {
     title: els.title.value,
     type: els.type.value,
     status: els.status.value,
+    readingStatus: els.readingStatus.value,
     priority: els.priority.value,
     format: els.format.value,
     price: els.price.value,
@@ -673,6 +731,7 @@ function editItem(id) {
   els.title.value = item.title;
   els.type.value = item.type;
   els.status.value = item.status;
+  setReadingStatus(item.readingStatus);
   els.priority.value = item.priority;
   setFormat(item.format);
   els.price.value = item.price || "";
@@ -689,6 +748,18 @@ function editItem(id) {
   els.form.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+function getNextReadingStatus(currentStatus) {
+  if (currentStatus === "unread") return "queued";
+  if (currentStatus === "queued") return "read";
+  return "unread";
+}
+
+function getReadingButtonLabel(currentStatus) {
+  if (currentStatus === "unread") return "Poner por leer";
+  if (currentStatus === "queued") return "Marcar leido";
+  return "Marcar no leido";
+}
+
 function toggleStatus(id) {
   state.items = state.items.map((item) => {
     if (item.id !== id) return item;
@@ -700,6 +771,20 @@ function toggleStatus(id) {
       acquiredDate: nextStatus === "owned" && !item.acquiredDate
         ? new Date().toISOString().slice(0, 10)
         : item.acquiredDate,
+    };
+  });
+
+  saveItems();
+  render();
+}
+
+function toggleReadingStatus(id) {
+  state.items = state.items.map((item) => {
+    if (item.id !== id || !isReadableType(item.type)) return item;
+
+    return {
+      ...item,
+      readingStatus: getNextReadingStatus(item.readingStatus),
     };
   });
 
@@ -770,11 +855,19 @@ els.clearFormBtn.addEventListener("click", resetForm);
 els.cancelEditBtn.addEventListener("click", resetForm);
 els.exportBtn.addEventListener("click", exportData);
 els.importFile.addEventListener("change", (event) => importData(event.target.files[0]));
-els.type.addEventListener("change", () => setFormat(getDefaultFormat(els.type.value)));
+els.type.addEventListener("change", () => {
+  setFormat(getDefaultFormat(els.type.value));
+  setReadingStatus(els.readingStatus.value);
+});
 els.formatPicker.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-format]");
   if (!button) return;
   setFormat(button.dataset.format);
+});
+els.readingPicker.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-reading]");
+  if (!button) return;
+  setReadingStatus(button.dataset.reading);
 });
 els.externalPhotoBtn.addEventListener("click", searchExternalPhotos);
 els.openGoogleImagesBtn.addEventListener("click", openGoogleImages);
@@ -846,4 +939,5 @@ els.typeFilters.addEventListener("click", (event) => {
 
 loadAppTitle();
 applyGoogleConfig();
+renderReadingPicker();
 render();
