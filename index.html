@@ -12,22 +12,33 @@
         <div class="brand-block">
           <p class="eyebrow">Catalogo personal</p>
           <h1 id="appTitle">Compras Estupidas de Elmer.</h1>
-          <div class="title-editor">
-            <label>
-              <span>Editar titulo</span>
-              <input id="titleEditor" type="text" maxlength="60" />
-            </label>
-            <div class="title-actions">
-              <button class="ghost-btn" id="saveTitleBtn" type="button">
-                Guardar titulo
-              </button>
-              <button class="ghost-btn" id="resetTitleBtn" type="button">
-                Restablecer
-              </button>
+          <details class="title-editor">
+            <summary>Editar titulo</summary>
+            <div class="title-editor-body">
+              <label>
+                <span>Titulo del sitio</span>
+                <input id="titleEditor" type="text" maxlength="60" />
+              </label>
+              <div class="title-actions">
+                <button class="ghost-btn" id="saveTitleBtn" type="button">
+                  Guardar titulo
+                </button>
+                <button class="ghost-btn" id="resetTitleBtn" type="button">
+                  Restablecer
+                </button>
+              </div>
             </div>
-          </div>
+          </details>
         </div>
         <div class="top-actions" aria-label="Acciones de archivo">
+          <button class="ghost-btn" id="themeToggleBtn" type="button" title="Cambiar tema">
+            <span class="button-icon" aria-hidden="true">D</span>
+            Modo oscuro
+          </button>
+          <button class="ghost-btn" id="cloudPanelToggle" type="button" aria-expanded="false" title="Configurar sincronizacion">
+            <span class="button-icon" aria-hidden="true">S</span>
+            Sync
+          </button>
           <button class="ghost-btn" id="exportBtn" type="button" title="Exportar JSON">
             <span class="button-icon" aria-hidden="true">v</span>
             Exportar
@@ -41,7 +52,7 @@
       </header>
 
       <main>
-        <section class="panel cloud-panel" aria-labelledby="cloudTitle">
+        <section class="panel cloud-panel" aria-labelledby="cloudTitle" hidden>
           <div class="cloud-heading">
             <div>
               <h2 id="cloudTitle">Sincronizacion</h2>
@@ -98,6 +109,10 @@
           <div class="stat-panel">
             <span class="stat-label">Conseguidos</span>
             <strong id="ownedCount">0</strong>
+          </div>
+          <div class="stat-panel">
+            <span class="stat-label">Leyendo</span>
+            <strong id="readingNowCount">0</strong>
           </div>
           <div class="stat-panel">
             <span class="stat-label">Valor pendiente</span>
@@ -171,194 +186,206 @@
               <input id="readingStatus" name="readingStatus" type="hidden" value="unread" />
               <input id="imageData" name="imageData" type="hidden" />
 
-              <label>
-                <span>Titulo</span>
-                <input id="title" name="title" type="text" placeholder="Ej. Berserk Deluxe 1" required />
-              </label>
-
-              <div class="form-row">
+              <details class="form-section" open>
+                <summary>Datos principales</summary>
                 <label>
-                  <span>Tipo</span>
-                  <select id="type" name="type">
-                    <option value="comic">Comic</option>
-                    <option value="manga">Manga</option>
-                    <option value="book">Libro</option>
-                    <option value="figure">Figura</option>
-                  </select>
+                  <span>Titulo</span>
+                  <input id="title" name="title" type="text" placeholder="Ej. Berserk Deluxe 1" required />
                 </label>
-                <label>
-                  <span>Estado</span>
-                  <select id="status" name="status">
-                    <option value="wishlist">Pendiente</option>
-                    <option value="owned">Conseguido</option>
-                  </select>
-                </label>
-              </div>
 
-              <div class="form-row">
-                <label>
-                  <span>Prioridad</span>
-                  <select id="priority" name="priority">
-                    <option value="">Sin prioridad</option>
-                    <option value="high">Alta</option>
-                    <option value="medium">Media</option>
-                    <option value="low">Baja</option>
-                  </select>
-                </label>
-                <label>
-                  <span>Valor total del item</span>
-                  <span class="money-input">
-                    <span aria-hidden="true">$</span>
-                    <input id="price" name="price" type="number" min="0" step="0.01" placeholder="0.00" />
-                  </span>
-                </label>
-              </div>
-
-              <div class="field-group">
-                <span>Formato o edicion</span>
-                <div class="format-picker" id="formatPicker" aria-label="Formato o edicion">
-                  <button class="active" type="button" data-format="paperback">Paperback</button>
-                  <button type="button" data-format="hardcover">Hardcover</button>
-                  <button type="button" data-format="omnibus">Omnibus</button>
-                  <button type="button" data-format="deluxe">Deluxe</button>
-                  <button type="button" data-format="single">Grapa</button>
-                  <button type="button" data-format="variant">Variante</button>
-                  <button type="button" data-format="boxset">Box set</button>
-                  <button type="button" data-format="digital">Digital</button>
-                  <button type="button" data-format="tankobon">Tankobon</button>
-                  <button type="button" data-format="scale112">1/12</button>
-                  <button type="button" data-format="statue">Estatua</button>
-                </div>
-              </div>
-
-              <div class="field-group" id="readingGroup">
-                <span>Lectura</span>
-                <div class="reading-picker" id="readingPicker" aria-label="Estado de lectura">
-                  <button class="active" type="button" data-reading="unread">No leido</button>
-                  <button type="button" data-reading="queued">Por leer</button>
-                  <button type="button" data-reading="reading">Leyendo</button>
-                  <button type="button" data-reading="read">Leido</button>
-                </div>
-              </div>
-
-              <div class="field-group reading-progress-editor" id="readingProgressGroup">
-                <span>Progreso de lectura</span>
                 <div class="form-row">
                   <label>
-                    <span>Paginas leidas</span>
-                    <input id="pagesRead" name="pagesRead" type="number" min="0" step="1" inputmode="numeric" placeholder="0" />
+                    <span>Tipo</span>
+                    <select id="type" name="type">
+                      <option value="comic">Comic</option>
+                      <option value="manga">Manga</option>
+                      <option value="book">Libro</option>
+                      <option value="figure">Figura</option>
+                    </select>
                   </label>
                   <label>
-                    <span>Total paginas</span>
-                    <input id="totalPages" name="totalPages" type="number" min="0" step="1" inputmode="numeric" placeholder="0" />
+                    <span>Estado</span>
+                    <select id="status" name="status">
+                      <option value="wishlist">Pendiente</option>
+                      <option value="owned">Conseguido</option>
+                    </select>
                   </label>
                 </div>
+
                 <div class="form-row">
                   <label>
-                    <span>Tiempo leido</span>
-                    <span class="unit-input">
-                      <input id="readingMinutes" name="readingMinutes" type="number" min="0" step="1" inputmode="numeric" placeholder="0" />
-                      <span aria-hidden="true">min</span>
+                    <span>Prioridad</span>
+                    <select id="priority" name="priority">
+                      <option value="">Sin prioridad</option>
+                      <option value="high">Alta</option>
+                      <option value="medium">Media</option>
+                      <option value="low">Baja</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Valor total del item</span>
+                    <span class="money-input">
+                      <span aria-hidden="true">$</span>
+                      <input id="price" name="price" type="number" min="0" step="0.01" placeholder="0.00" />
                     </span>
                   </label>
-                  <div class="progress-preview" aria-label="Progreso calculado">
-                    <div class="progress-preview-head">
-                      <span>Porcentaje</span>
-                      <strong id="progressPreviewText">0%</strong>
-                    </div>
-                    <div class="progress-track">
-                      <span id="progressPreviewBar"></span>
-                    </div>
+                </div>
+
+                <div class="field-group">
+                  <span>Formato o edicion</span>
+                  <div class="format-picker" id="formatPicker" aria-label="Formato o edicion">
+                    <button class="active" type="button" data-format="paperback">Paperback</button>
+                    <button type="button" data-format="hardcover">Hardcover</button>
+                    <button type="button" data-format="omnibus">Omnibus</button>
+                    <button type="button" data-format="deluxe">Deluxe</button>
+                    <button type="button" data-format="single">Grapa</button>
+                    <button type="button" data-format="variant">Variante</button>
+                    <button type="button" data-format="boxset">Box set</button>
+                    <button type="button" data-format="digital">Digital</button>
+                    <button type="button" data-format="tankobon">Tankobon</button>
+                    <button type="button" data-format="scale112">1/12</button>
+                    <button type="button" data-format="statue">Estatua</button>
                   </div>
                 </div>
-              </div>
+              </details>
 
-              <label>
-                <span>Serie o linea</span>
-                <input id="series" name="series" type="text" placeholder="Ej. Marvel Legends" />
-              </label>
-
-              <div class="form-row">
-                <label>
-                  <span>Tienda</span>
-                  <input id="store" name="store" type="text" placeholder="Ej. Amazon, eBay" />
-                </label>
-                <label>
-                  <span>Fecha conseguido</span>
-                  <input id="acquiredDate" name="acquiredDate" type="date" />
-                </label>
-              </div>
-
-              <div class="image-panel">
-                <div class="image-panel-heading">
-                  <span>Imagen del item</span>
-                  <strong id="imageSourceBadge">Sin foto</strong>
+              <details class="form-section" id="readingSection" open>
+                <summary>Lectura y progreso</summary>
+                <div class="field-group" id="readingGroup">
+                  <span>Lectura</span>
+                  <div class="reading-picker" id="readingPicker" aria-label="Estado de lectura">
+                    <button class="active" type="button" data-reading="unread">No leido</button>
+                    <button type="button" data-reading="queued">Por leer</button>
+                    <button type="button" data-reading="reading">Leyendo</button>
+                    <button type="button" data-reading="read">Leido</button>
+                  </div>
                 </div>
 
-                <label class="image-drop-zone" id="imageDropZone">
-                  Toca aqui para elegir desde Galeria / Fotos
-                  <input id="galleryFile" name="galleryFile" type="file" accept="image/*" />
-                </label>
-
-                <div class="local-photo-preview" id="localPhotoPreview" hidden>
-                  <img id="imagePreview" alt="Vista previa de la foto seleccionada" />
-                </div>
-
-                <div class="local-photo-actions">
-                  <label class="primary-btn file-action gallery-photo-action" id="galleryPhotoBtn" for="galleryFile">
-                    Galeria / Fotos
-                  </label>
-                  <label class="secondary-btn file-action image-file-action">
-                    Seleccionar archivo
-                    <input id="imageFile" name="imageFile" type="file" accept="image/*" />
-                  </label>
-                  <button class="secondary-btn" id="pasteImageBtn" type="button">
-                    Pegar imagen
-                  </button>
-                  <button class="secondary-btn" id="clearPhotoBtn" type="button">
-                    Quitar foto
-                  </button>
-                </div>
-
-                <label>
-                  <span>URL de imagen</span>
-                  <input id="imageUrl" name="imageUrl" type="url" placeholder="https://..." />
-                </label>
-
-                <p class="local-photo-status" id="localPhotoStatus" aria-live="polite"></p>
-
-                <div class="google-photo-panel">
-                  <label>
-                    <span>Fotos de Google</span>
-                    <input id="externalPhotoSearch" type="search" placeholder="Buscar en Google" />
-                  </label>
+                <div class="field-group reading-progress-editor" id="readingProgressGroup">
+                  <span>Progreso de lectura</span>
                   <div class="form-row">
                     <label>
-                      <span>Google API key</span>
-                      <input id="googleApiKey" type="password" autocomplete="off" placeholder="API key" />
+                      <span>Paginas leidas</span>
+                      <input id="pagesRead" name="pagesRead" type="number" min="0" step="1" inputmode="numeric" placeholder="0" />
                     </label>
                     <label>
-                      <span>Search engine ID</span>
-                      <input id="googleSearchEngineId" type="text" autocomplete="off" placeholder="CX" />
+                      <span>Total paginas</span>
+                      <input id="totalPages" name="totalPages" type="number" min="0" step="1" inputmode="numeric" placeholder="0" />
                     </label>
                   </div>
-                  <div class="external-photo-actions">
-                    <button class="secondary-btn" id="externalPhotoBtn" type="button">
-                      Buscar fotos
+                  <div class="form-row">
+                    <label>
+                      <span>Tiempo leido</span>
+                      <span class="unit-input">
+                        <input id="readingMinutes" name="readingMinutes" type="number" min="0" step="1" inputmode="numeric" placeholder="0" />
+                        <span aria-hidden="true">min</span>
+                      </span>
+                    </label>
+                    <div class="progress-preview" aria-label="Progreso calculado">
+                      <div class="progress-preview-head">
+                        <span>Porcentaje</span>
+                        <strong id="progressPreviewText">0%</strong>
+                      </div>
+                      <div class="progress-track">
+                        <span id="progressPreviewBar"></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </details>
+
+              <details class="form-section" open>
+                <summary>Imagen</summary>
+                <div class="image-panel">
+                  <div class="image-panel-heading">
+                    <span>Imagen del item</span>
+                    <strong id="imageSourceBadge">Sin foto</strong>
+                  </div>
+
+                  <label class="image-drop-zone" id="imageDropZone">
+                    Toca aqui para elegir desde Galeria / Fotos
+                    <input id="galleryFile" name="galleryFile" type="file" accept="image/*" />
+                  </label>
+
+                  <div class="local-photo-preview" id="localPhotoPreview" hidden>
+                    <img id="imagePreview" alt="Vista previa de la foto seleccionada" />
+                  </div>
+
+                  <div class="local-photo-actions">
+                    <label class="primary-btn file-action gallery-photo-action" id="galleryPhotoBtn" for="galleryFile">
+                      Galeria / Fotos
+                    </label>
+                    <label class="secondary-btn file-action image-file-action">
+                      Seleccionar archivo
+                      <input id="imageFile" name="imageFile" type="file" accept="image/*" />
+                    </label>
+                    <button class="secondary-btn" id="pasteImageBtn" type="button">
+                      Pegar imagen
                     </button>
-                    <button class="secondary-btn" id="openGoogleImagesBtn" type="button">
-                      Abrir Google
+                    <button class="secondary-btn" id="clearPhotoBtn" type="button">
+                      Quitar foto
                     </button>
                   </div>
-                  <p class="external-photo-status" id="externalPhotoStatus" aria-live="polite"></p>
-                  <div class="external-photo-results" id="externalPhotoResults"></div>
-                </div>
-              </div>
 
-              <label>
-                <span>Notas</span>
-                <textarea id="notes" name="notes" rows="4" placeholder="Edicion, escala, variante, vendedor..."></textarea>
-              </label>
+                  <label>
+                    <span>URL de imagen</span>
+                    <input id="imageUrl" name="imageUrl" type="url" placeholder="https://..." />
+                  </label>
+
+                  <p class="local-photo-status" id="localPhotoStatus" aria-live="polite"></p>
+
+                  <div class="google-photo-panel">
+                    <label>
+                      <span>Fotos de Google</span>
+                      <input id="externalPhotoSearch" type="search" placeholder="Buscar en Google" />
+                    </label>
+                    <div class="form-row">
+                      <label>
+                        <span>Google API key</span>
+                        <input id="googleApiKey" type="password" autocomplete="off" placeholder="API key" />
+                      </label>
+                      <label>
+                        <span>Search engine ID</span>
+                        <input id="googleSearchEngineId" type="text" autocomplete="off" placeholder="CX" />
+                      </label>
+                    </div>
+                    <div class="external-photo-actions">
+                      <button class="secondary-btn" id="externalPhotoBtn" type="button">
+                        Buscar fotos
+                      </button>
+                      <button class="secondary-btn" id="openGoogleImagesBtn" type="button">
+                        Abrir Google
+                      </button>
+                    </div>
+                    <p class="external-photo-status" id="externalPhotoStatus" aria-live="polite"></p>
+                    <div class="external-photo-results" id="externalPhotoResults"></div>
+                  </div>
+                </div>
+              </details>
+
+              <details class="form-section">
+                <summary>Detalles y notas</summary>
+                <label>
+                  <span>Serie o linea</span>
+                  <input id="series" name="series" type="text" placeholder="Ej. Marvel Legends" />
+                </label>
+
+                <div class="form-row">
+                  <label>
+                    <span>Tienda</span>
+                    <input id="store" name="store" type="text" placeholder="Ej. Amazon, eBay" />
+                  </label>
+                  <label>
+                    <span>Fecha conseguido</span>
+                    <input id="acquiredDate" name="acquiredDate" type="date" />
+                  </label>
+                </div>
+
+                <label>
+                  <span>Notas</span>
+                  <textarea id="notes" name="notes" rows="4" placeholder="Edicion, escala, variante, vendedor..."></textarea>
+                </label>
+              </details>
 
               <div class="form-actions">
                 <button class="primary-btn" type="submit">
@@ -397,6 +424,19 @@
                 <button type="button" data-type="manga">Mangas</button>
                 <button type="button" data-type="book">Libros</button>
                 <button type="button" data-type="figure">Figuras</button>
+              </div>
+
+              <div class="segmented" id="readingFilters">
+                <button class="active" type="button" data-reading-filter="all">Lectura</button>
+                <button type="button" data-reading-filter="unread">No leido</button>
+                <button type="button" data-reading-filter="queued">Por leer</button>
+                <button type="button" data-reading-filter="reading">Leyendo</button>
+                <button type="button" data-reading-filter="read">Leido</button>
+              </div>
+
+              <div class="segmented view-mode" id="viewModeToggle" aria-label="Vista del catalogo">
+                <button class="active" type="button" data-view-mode="cards">Tarjetas</button>
+                <button type="button" data-view-mode="list">Lista</button>
               </div>
 
               <label class="sort-select">

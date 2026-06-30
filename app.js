@@ -2,6 +2,8 @@ const STORAGE_KEY = "compras-geek-catalogo-v1";
 const GOOGLE_CONFIG_KEY = "compras-geek-google-config-v1";
 const TITLE_STORAGE_KEY = "compras-geek-title-v1";
 const CLOUD_CONFIG_KEY = "compras-geek-cloud-config-v1";
+const THEME_STORAGE_KEY = "compras-geek-theme-v1";
+const VIEW_MODE_STORAGE_KEY = "compras-geek-view-mode-v1";
 const CLOUD_TABLE = "catalog_items";
 const SUPABASE_MODULE_URL = "https://esm.sh/@supabase/supabase-js@2";
 const DEFAULT_APP_TITLE = "Compras Estupidas de Elmer.";
@@ -151,9 +153,11 @@ const state = {
   filters: {
     status: "all",
     type: "all",
+    reading: "all",
     search: "",
     sort: "created-desc",
   },
+  viewMode: localStorage.getItem(VIEW_MODE_STORAGE_KEY) === "list" ? "list" : "cards",
   cloud: {
     client: null,
     configSignature: "",
@@ -169,6 +173,8 @@ const els = {
   titleEditor: document.querySelector("#titleEditor"),
   saveTitleBtn: document.querySelector("#saveTitleBtn"),
   resetTitleBtn: document.querySelector("#resetTitleBtn"),
+  themeToggleBtn: document.querySelector("#themeToggleBtn"),
+  cloudPanelToggle: document.querySelector("#cloudPanelToggle"),
   cloudPanel: document.querySelector(".cloud-panel"),
   cloudStatus: document.querySelector("#cloudStatus"),
   supabaseUrl: document.querySelector("#supabaseUrl"),
@@ -182,6 +188,7 @@ const els = {
   cloudPullBtn: document.querySelector("#cloudPullBtn"),
   cloudPushBtn: document.querySelector("#cloudPushBtn"),
   form: document.querySelector("#itemForm"),
+  formSections: document.querySelectorAll(".form-section"),
   formTitle: document.querySelector("#formTitle"),
   itemId: document.querySelector("#itemId"),
   title: document.querySelector("#title"),
@@ -191,6 +198,7 @@ const els = {
   format: document.querySelector("#format"),
   formatPicker: document.querySelector("#formatPicker"),
   readingStatus: document.querySelector("#readingStatus"),
+  readingSection: document.querySelector("#readingSection"),
   readingPicker: document.querySelector("#readingPicker"),
   readingGroup: document.querySelector("#readingGroup"),
   readingProgressGroup: document.querySelector("#readingProgressGroup"),
@@ -229,6 +237,7 @@ const els = {
   importFile: document.querySelector("#importFile"),
   wishlistCount: document.querySelector("#wishlistCount"),
   ownedCount: document.querySelector("#ownedCount"),
+  readingNowCount: document.querySelector("#readingNowCount"),
   wishlistValue: document.querySelector("#wishlistValue"),
   catalogValue: document.querySelector("#catalogValue"),
   totalCount: document.querySelector("#totalCount"),
@@ -245,6 +254,8 @@ const els = {
   searchInput: document.querySelector("#searchInput"),
   statusFilters: document.querySelector("#statusFilters"),
   typeFilters: document.querySelector("#typeFilters"),
+  readingFilters: document.querySelector("#readingFilters"),
+  viewModeToggle: document.querySelector("#viewModeToggle"),
   sortSelect: document.querySelector("#sortSelect"),
   catalogGrid: document.querySelector("#catalogGrid"),
   emptyState: document.querySelector("#emptyState"),
@@ -299,6 +310,44 @@ function loadAppTitle() {
 function resetAppTitle() {
   localStorage.removeItem(TITLE_STORAGE_KEY);
   setAppTitle(DEFAULT_APP_TITLE, false);
+}
+
+function applyTheme(theme, shouldSave = true) {
+  const nextTheme = theme === "dark" ? "dark" : "light";
+  document.body.dataset.theme = nextTheme;
+  els.themeToggleBtn.textContent = nextTheme === "dark" ? "Modo claro" : "Modo oscuro";
+
+  if (shouldSave) {
+    localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+  }
+}
+
+function toggleTheme() {
+  applyTheme(document.body.dataset.theme === "dark" ? "light" : "dark");
+}
+
+function renderCloudPanelToggle() {
+  const isOpen = !els.cloudPanel.hidden;
+  els.cloudPanelToggle.textContent = isOpen ? "Ocultar sync" : "Sync";
+  els.cloudPanelToggle.setAttribute("aria-expanded", String(isOpen));
+  els.cloudPanelToggle.classList.toggle("sync-online", Boolean(state.cloud.session));
+}
+
+function toggleCloudPanel() {
+  els.cloudPanel.hidden = !els.cloudPanel.hidden;
+  renderCloudPanelToggle();
+}
+
+function setDefaultFormSections() {
+  els.formSections.forEach((section, index) => {
+    section.open = index < 3;
+  });
+}
+
+function expandFormSections() {
+  els.formSections.forEach((section) => {
+    section.open = true;
+  });
 }
 
 function loadGoogleConfig() {
@@ -368,6 +417,7 @@ function renderCloudControls() {
   els.cloudLogoutBtn.disabled = disabled;
   els.cloudPullBtn.disabled = disabled || !isOnline;
   els.cloudPushBtn.disabled = disabled || !isOnline;
+  renderCloudPanelToggle();
 }
 
 function formatMoney(value) {
@@ -451,6 +501,7 @@ function normalizeReadingStatus(value, type) {
 
 function renderReadingPicker() {
   const canTrackReading = isReadableType(els.type.value);
+  els.readingSection.hidden = !canTrackReading;
   els.readingGroup.hidden = !canTrackReading;
   els.readingProgressGroup.hidden = !canTrackReading;
 
@@ -794,6 +845,7 @@ function getVisibleItems() {
     .filter((item) => {
       const matchesStatus = state.filters.status === "all" || item.status === state.filters.status;
       const matchesType = state.filters.type === "all" || item.type === state.filters.type;
+      const matchesReading = state.filters.reading === "all" || item.readingStatus === state.filters.reading;
       const haystack = [
         item.title,
         item.series,
@@ -809,7 +861,7 @@ function getVisibleItems() {
       ]
         .join(" ")
         .toLowerCase();
-      return matchesStatus && matchesType && haystack.includes(term);
+      return matchesStatus && matchesType && matchesReading && haystack.includes(term);
     })
     .sort((a, b) => {
       if (state.filters.sort === "priority") {
@@ -835,11 +887,13 @@ function getVisibleItems() {
 function renderStats() {
   const wishlist = state.items.filter((item) => item.status === "wishlist");
   const owned = state.items.filter((item) => item.status === "owned");
+  const readingNow = state.items.filter((item) => item.readingStatus === "reading");
   const wishlistValue = wishlist.reduce((sum, item) => sum + Number(item.price || 0), 0);
   const catalogValue = state.items.reduce((sum, item) => sum + Number(item.price || 0), 0);
 
   els.wishlistCount.textContent = wishlist.length;
   els.ownedCount.textContent = owned.length;
+  els.readingNowCount.textContent = readingNow.length;
   els.wishlistValue.textContent = formatMoney(wishlistValue);
   els.catalogValue.textContent = formatMoney(catalogValue);
   els.totalCount.textContent = state.items.length;
@@ -910,11 +964,20 @@ function renderFilters() {
   els.typeFilters.querySelectorAll("button").forEach((button) => {
     button.classList.toggle("active", button.dataset.type === state.filters.type);
   });
+
+  els.readingFilters.querySelectorAll("button").forEach((button) => {
+    button.classList.toggle("active", button.dataset.readingFilter === state.filters.reading);
+  });
+
+  els.viewModeToggle.querySelectorAll("button").forEach((button) => {
+    button.classList.toggle("active", button.dataset.viewMode === state.viewMode);
+  });
 }
 
 function renderCatalog() {
   const visibleItems = getVisibleItems();
   els.catalogGrid.replaceChildren();
+  els.catalogGrid.classList.toggle("list-mode", state.viewMode === "list");
   els.resultCount.textContent = `${visibleItems.length} ${visibleItems.length === 1 ? "item" : "items"}`;
   els.emptyState.hidden = visibleItems.length > 0;
 
@@ -999,6 +1062,7 @@ function resetForm() {
   els.itemId.value = "";
   els.formTitle.textContent = "Nuevo item";
   els.cancelEditBtn.hidden = true;
+  setDefaultFormSections();
   els.status.value = "wishlist";
   setReadingStatus("unread");
   els.pagesRead.value = "";
@@ -1087,6 +1151,7 @@ function editItem(id) {
   clearExternalPhotos();
   els.formTitle.textContent = "Editar item";
   els.cancelEditBtn.hidden = false;
+  expandFormSections();
   els.form.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -1492,6 +1557,8 @@ async function initializeCloud() {
 }
 
 els.form.addEventListener("submit", handleSubmit);
+els.themeToggleBtn.addEventListener("click", toggleTheme);
+els.cloudPanelToggle.addEventListener("click", toggleCloudPanel);
 els.saveCloudConfigBtn.addEventListener("click", saveCloudConfigFromForm);
 els.cloudSignupBtn.addEventListener("click", handleCloudSignup);
 els.cloudLoginBtn.addEventListener("click", handleCloudLogin);
@@ -1589,6 +1656,22 @@ els.typeFilters.addEventListener("click", (event) => {
   render();
 });
 
+els.readingFilters.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-reading-filter]");
+  if (!button) return;
+  state.filters.reading = button.dataset.readingFilter;
+  render();
+});
+
+els.viewModeToggle.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-view-mode]");
+  if (!button) return;
+  state.viewMode = button.dataset.viewMode === "list" ? "list" : "cards";
+  localStorage.setItem(VIEW_MODE_STORAGE_KEY, state.viewMode);
+  render();
+});
+
+applyTheme(localStorage.getItem(THEME_STORAGE_KEY) || "light", false);
 loadAppTitle();
 applyGoogleConfig();
 initializeCloud();

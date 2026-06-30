@@ -34,6 +34,9 @@ Pendiente agregar capturas de pantalla de:
 - Filtrar por estado y tipo de articulo.
 - Buscar por titulo, serie, tienda, notas o formato.
 - Ordenar por fecha, prioridad, precio o titulo.
+- Cambiar entre vista de tarjetas y vista compacta de lista.
+- Filtrar por estado de lectura: no leido, por leer, leyendo o leido.
+- Usar modo claro u oscuro.
 - Exportar e importar el catalogo en formato JSON.
 - Guardar datos localmente usando `localStorage`.
 - Sincronizar el catalogo entre dispositivos usando Supabase.
