@@ -21,6 +21,7 @@ const statusLabels = {
 const readingLabels = {
   unread: "No leido",
   queued: "Por leer",
+  reading: "Leyendo",
   read: "Leido",
 };
 
@@ -235,9 +236,11 @@ const els = {
   readList: document.querySelector("#readList"),
   unreadList: document.querySelector("#unreadList"),
   queuedList: document.querySelector("#queuedList"),
+  readingNowList: document.querySelector("#readingNowList"),
   readListCount: document.querySelector("#readListCount"),
   unreadListCount: document.querySelector("#unreadListCount"),
   queuedListCount: document.querySelector("#queuedListCount"),
+  readingNowListCount: document.querySelector("#readingNowListCount"),
   resultCount: document.querySelector("#resultCount"),
   searchInput: document.querySelector("#searchInput"),
   statusFilters: document.querySelector("#statusFilters"),
@@ -890,11 +893,13 @@ function renderReadingLists() {
   const readItems = readableItems.filter((item) => item.readingStatus === "read");
   const unreadItems = readableItems.filter((item) => item.readingStatus === "unread");
   const queuedItems = readableItems.filter((item) => item.readingStatus === "queued");
+  const readingNowItems = readableItems.filter((item) => item.readingStatus === "reading");
 
   els.readingBoardCount.textContent = `${readableItems.length} ${readableItems.length === 1 ? "item de lectura" : "items de lectura"}`;
   renderReadingColumn(els.readList, els.readListCount, readItems, "Nada leido todavia.");
   renderReadingColumn(els.unreadList, els.unreadListCount, unreadItems, "Nada sin leer.");
   renderReadingColumn(els.queuedList, els.queuedListCount, queuedItems, "Nada por leer.");
+  renderReadingColumn(els.readingNowList, els.readingNowListCount, readingNowItems, "Nada en lectura.");
 }
 
 function renderFilters() {
@@ -1087,13 +1092,15 @@ function editItem(id) {
 
 function getNextReadingStatus(currentStatus) {
   if (currentStatus === "unread") return "queued";
-  if (currentStatus === "queued") return "read";
+  if (currentStatus === "queued") return "reading";
+  if (currentStatus === "reading") return "read";
   return "unread";
 }
 
 function getReadingButtonLabel(currentStatus) {
   if (currentStatus === "unread") return "Poner por leer";
-  if (currentStatus === "queued") return "Marcar leido";
+  if (currentStatus === "queued") return "Marcar leyendo";
+  if (currentStatus === "reading") return "Marcar leido";
   return "Marcar no leido";
 }
 

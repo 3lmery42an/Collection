@@ -145,6 +145,14 @@
               </div>
               <ul class="reading-list" id="queuedList"></ul>
             </section>
+
+            <section class="reading-column" aria-labelledby="readingNowListTitle">
+              <div class="reading-column-heading">
+                <span id="readingNowListTitle">Leyendo</span>
+                <strong id="readingNowListCount">0</strong>
+              </div>
+              <ul class="reading-list" id="readingNowList"></ul>
+            </section>
           </div>
         </section>
 
@@ -228,6 +236,7 @@
                 <div class="reading-picker" id="readingPicker" aria-label="Estado de lectura">
                   <button class="active" type="button" data-reading="unread">No leido</button>
                   <button type="button" data-reading="queued">Por leer</button>
+                  <button type="button" data-reading="reading">Leyendo</button>
                   <button type="button" data-reading="read">Leido</button>
                 </div>
               </div>

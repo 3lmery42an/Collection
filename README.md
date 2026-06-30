@@ -29,7 +29,7 @@ Pendiente agregar capturas de pantalla de:
 - Clasificar articulos como pendientes o conseguidos.
 - Guardar precio, tienda, serie/linea, fecha, notas e imagen.
 - Asignar prioridad: alta, media o baja.
-- Registrar estado de lectura: no leido, por leer o leido.
+- Registrar estado de lectura: no leido, por leer, leyendo o leido.
 - Guardar paginas leidas, total de paginas, tiempo leido y porcentaje de progreso.
 - Filtrar por estado y tipo de articulo.
 - Buscar por titulo, serie, tienda, notas o formato.
