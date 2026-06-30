@@ -1,5 +1,7 @@
 const STORAGE_KEY = "compras-geek-catalogo-v1";
 const GOOGLE_CONFIG_KEY = "compras-geek-google-config-v1";
+const TITLE_STORAGE_KEY = "compras-geek-title-v1";
+const DEFAULT_APP_TITLE = "Compras Estupidas de Elmer.";
 
 const typeLabels = {
   comic: "Comic",
@@ -112,6 +114,10 @@ const state = {
 };
 
 const els = {
+  appTitle: document.querySelector("#appTitle"),
+  titleEditor: document.querySelector("#titleEditor"),
+  saveTitleBtn: document.querySelector("#saveTitleBtn"),
+  resetTitleBtn: document.querySelector("#resetTitleBtn"),
   form: document.querySelector("#itemForm"),
   formTitle: document.querySelector("#formTitle"),
   itemId: document.querySelector("#itemId"),
@@ -183,6 +189,30 @@ function saveItems() {
     alert("No se pudo guardar. La foto puede ser demasiado grande; intenta con una imagen mas pequena.");
     return false;
   }
+}
+
+function cleanAppTitle(value) {
+  return String(value || "").trim().slice(0, 60) || DEFAULT_APP_TITLE;
+}
+
+function setAppTitle(value, shouldSave = true) {
+  const title = cleanAppTitle(value);
+  els.appTitle.textContent = title;
+  els.titleEditor.value = title;
+  document.title = title;
+
+  if (shouldSave) {
+    localStorage.setItem(TITLE_STORAGE_KEY, title);
+  }
+}
+
+function loadAppTitle() {
+  setAppTitle(localStorage.getItem(TITLE_STORAGE_KEY) || DEFAULT_APP_TITLE, false);
+}
+
+function resetAppTitle() {
+  localStorage.removeItem(TITLE_STORAGE_KEY);
+  setAppTitle(DEFAULT_APP_TITLE, false);
 }
 
 function loadGoogleConfig() {
@@ -729,6 +759,13 @@ function importData(file) {
 }
 
 els.form.addEventListener("submit", handleSubmit);
+els.saveTitleBtn.addEventListener("click", () => setAppTitle(els.titleEditor.value));
+els.resetTitleBtn.addEventListener("click", resetAppTitle);
+els.titleEditor.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter") return;
+  event.preventDefault();
+  setAppTitle(els.titleEditor.value);
+});
 els.clearFormBtn.addEventListener("click", resetForm);
 els.cancelEditBtn.addEventListener("click", resetForm);
 els.exportBtn.addEventListener("click", exportData);
@@ -807,5 +844,6 @@ els.typeFilters.addEventListener("click", (event) => {
   render();
 });
 
+loadAppTitle();
 applyGoogleConfig();
 render();

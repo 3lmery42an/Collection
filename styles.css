@@ -74,6 +74,10 @@ img {
   text-transform: uppercase;
 }
 
+.brand-block {
+  min-width: 0;
+}
+
 h1,
 h2,
 h3,
@@ -86,6 +90,38 @@ h1 {
   font-size: clamp(2rem, 5vw, 4rem);
   line-height: 0.95;
   letter-spacing: 0;
+}
+
+.title-editor {
+  display: grid;
+  grid-template-columns: minmax(220px, 420px) auto;
+  gap: 10px;
+  align-items: end;
+  margin-top: 14px;
+}
+
+.title-editor label {
+  color: #a9d7d3;
+}
+
+.title-editor input {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.title-editor input::placeholder {
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.title-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.title-actions .ghost-btn {
+  min-height: 42px;
 }
 
 h2 {
@@ -779,6 +815,7 @@ textarea:focus {
   }
 
   .topbar,
+  .title-editor,
   .catalog-header,
   .form-row {
     display: grid;
@@ -790,6 +827,7 @@ textarea:focus {
   }
 
   .top-actions .ghost-btn,
+  .title-actions .ghost-btn,
   .primary-btn,
   .secondary-btn,
   .danger-btn {

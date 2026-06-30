@@ -9,9 +9,23 @@
   <body>
     <div class="app-shell">
       <header class="topbar">
-        <div>
+        <div class="brand-block">
           <p class="eyebrow">Catalogo personal</p>
-          <h1>Compras Estupidas de Elmer.</h1>
+          <h1 id="appTitle">Compras Estupidas de Elmer.</h1>
+          <div class="title-editor">
+            <label>
+              <span>Editar titulo</span>
+              <input id="titleEditor" type="text" maxlength="60" />
+            </label>
+            <div class="title-actions">
+              <button class="ghost-btn" id="saveTitleBtn" type="button">
+                Guardar titulo
+              </button>
+              <button class="ghost-btn" id="resetTitleBtn" type="button">
+                Restablecer
+              </button>
+            </div>
+          </div>
         </div>
         <div class="top-actions" aria-label="Acciones de archivo">
           <button class="ghost-btn" id="exportBtn" type="button" title="Exportar JSON">
