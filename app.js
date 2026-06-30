@@ -126,6 +126,12 @@ const els = {
   store: document.querySelector("#store"),
   acquiredDate: document.querySelector("#acquiredDate"),
   imageUrl: document.querySelector("#imageUrl"),
+  imageData: document.querySelector("#imageData"),
+  imageFile: document.querySelector("#imageFile"),
+  imagePreview: document.querySelector("#imagePreview"),
+  localPhotoPreview: document.querySelector("#localPhotoPreview"),
+  localPhotoStatus: document.querySelector("#localPhotoStatus"),
+  clearPhotoBtn: document.querySelector("#clearPhotoBtn"),
   externalPhotoSearch: document.querySelector("#externalPhotoSearch"),
   googleApiKey: document.querySelector("#googleApiKey"),
   googleSearchEngineId: document.querySelector("#googleSearchEngineId"),
@@ -170,7 +176,13 @@ function loadItems() {
 }
 
 function saveItems() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.items));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.items));
+    return true;
+  } catch {
+    alert("No se pudo guardar. La foto puede ser demasiado grande; intenta con una imagen mas pequena.");
+    return false;
+  }
 }
 
 function loadGoogleConfig() {
@@ -248,10 +260,14 @@ function cleanPhotoTitle(title) {
     .replace(/\.[a-z0-9]+$/i, "");
 }
 
-function sanitizeImageUrl(url) {
+function sanitizeImageSource(url) {
   const value = String(url || "").trim();
-  if (!value || value.startsWith("assets/") || value.startsWith("data:") || value.startsWith("blob:") || value.startsWith("file:")) {
+  if (!value || value.startsWith("assets/") || value.startsWith("blob:") || value.startsWith("file:")) {
     return "";
+  }
+
+  if (/^data:image\/(png|jpe?g|webp);base64,/i.test(value)) {
+    return value;
   }
 
   try {
@@ -260,6 +276,61 @@ function sanitizeImageUrl(url) {
   } catch {
     return "";
   }
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadImage(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = dataUrl;
+  });
+}
+
+async function compressImageFile(file) {
+  if (!file?.type?.startsWith("image/")) {
+    throw new Error("Archivo invalido");
+  }
+
+  const dataUrl = await fileToDataUrl(file);
+  const image = await loadImage(dataUrl);
+  const maxSide = 1100;
+  const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
+  const width = Math.max(1, Math.round(image.naturalWidth * scale));
+  const height = Math.max(1, Math.round(image.naturalHeight * scale));
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+
+  canvas.width = width;
+  canvas.height = height;
+  context.drawImage(image, 0, 0, width, height);
+
+  return canvas.toDataURL("image/jpeg", 0.84);
+}
+
+function showLocalPreview(imageSource, message = "") {
+  const source = sanitizeImageSource(imageSource);
+  els.imageData.value = source;
+  els.localPhotoPreview.hidden = !source;
+  els.imagePreview.src = source || "";
+  els.localPhotoStatus.textContent = message;
+}
+
+function clearLocalPhoto(message = "") {
+  els.imageData.value = "";
+  els.imageFile.value = "";
+  els.localPhotoPreview.hidden = true;
+  els.imagePreview.removeAttribute("src");
+  els.localPhotoStatus.textContent = message;
 }
 
 function renderExternalPhotos(photos) {
@@ -289,6 +360,7 @@ function renderExternalPhotos(photos) {
 
 function selectExternalPhoto(url, selectedButton) {
   els.imageUrl.value = url;
+  clearLocalPhoto();
   els.externalPhotoResults.querySelectorAll(".external-photo-option").forEach((button) => {
     button.classList.toggle("selected", button === selectedButton);
   });
@@ -378,7 +450,7 @@ function normalizeItem(item) {
     series: String(item.series || "").trim(),
     store: String(item.store || "").trim(),
     acquiredDate: String(item.acquiredDate || "").trim(),
-    image: sanitizeImageUrl(item.image),
+    image: sanitizeImageSource(item.image),
     notes: String(item.notes || "").trim(),
     createdAt: Number(item.createdAt || Date.now()),
   };
@@ -469,7 +541,7 @@ function renderCatalog() {
     const editButton = card.querySelector(".edit-item");
     const deleteButton = card.querySelector(".delete-item");
 
-    const coverImage = sanitizeImageUrl(item.image);
+    const coverImage = sanitizeImageSource(item.image);
     cover.hidden = !coverImage;
     cover.closest(".cover-wrap").classList.toggle("no-image", !coverImage);
     cover.src = coverImage;
@@ -520,6 +592,7 @@ function resetForm() {
   setFormat(getDefaultFormat(els.type.value));
   applyGoogleConfig();
   clearExternalPhotos();
+  clearLocalPhoto();
 }
 
 async function handleSubmit(event) {
@@ -527,7 +600,7 @@ async function handleSubmit(event) {
 
   const id = els.itemId.value;
   const existing = state.items.find((item) => item.id === id);
-  const image = sanitizeImageUrl(els.imageUrl.value) || sanitizeImageUrl(existing?.image);
+  const image = sanitizeImageSource(els.imageData.value) || sanitizeImageSource(els.imageUrl.value) || sanitizeImageSource(existing?.image);
 
   const item = normalizeItem({
     id: id || createId(),
@@ -547,13 +620,17 @@ async function handleSubmit(event) {
 
   if (!item.title) return;
 
-  if (id) {
-    state.items = state.items.map((current) => (current.id === id ? item : current));
-  } else {
-    state.items.unshift(item);
+  const previousItems = state.items;
+  state.items = id
+    ? state.items.map((current) => (current.id === id ? item : current))
+    : [item, ...state.items];
+
+  if (!saveItems()) {
+    state.items = previousItems;
+    render();
+    return;
   }
 
-  saveItems();
   resetForm();
   render();
 }
@@ -572,7 +649,9 @@ function editItem(id) {
   els.series.value = item.series;
   els.store.value = item.store;
   els.acquiredDate.value = item.acquiredDate;
-  els.imageUrl.value = sanitizeImageUrl(item.image);
+  const existingImage = sanitizeImageSource(item.image);
+  els.imageUrl.value = existingImage.startsWith("data:image/") ? "" : existingImage;
+  showLocalPreview(existingImage.startsWith("data:image/") ? existingImage : "", existingImage.startsWith("data:image/") ? "Foto local cargada." : "");
   els.notes.value = item.notes;
   clearExternalPhotos();
   els.formTitle.textContent = "Editar item";
@@ -668,10 +747,38 @@ els.externalPhotoSearch.addEventListener("keydown", (event) => {
   searchExternalPhotos();
 });
 els.imageUrl.addEventListener("input", () => {
+  clearLocalPhoto();
   els.externalPhotoResults.querySelectorAll(".external-photo-option").forEach((button) => {
     button.classList.remove("selected");
   });
-  setExternalPhotoStatus(els.imageUrl.value.trim() ? "URL de imagen lista." : "");
+  els.localPhotoStatus.textContent = els.imageUrl.value.trim() ? "URL de imagen lista." : "";
+  setExternalPhotoStatus("");
+});
+els.imageFile.addEventListener("change", async () => {
+  const file = els.imageFile.files[0];
+  if (!file) return;
+
+  els.localPhotoStatus.textContent = "Preparando foto...";
+
+  try {
+    const imageData = await compressImageFile(file);
+    els.imageUrl.value = "";
+    els.externalPhotoResults.querySelectorAll(".external-photo-option").forEach((button) => {
+      button.classList.remove("selected");
+    });
+    showLocalPreview(imageData, "Foto local lista.");
+    setExternalPhotoStatus("");
+  } catch {
+    clearLocalPhoto("No se pudo cargar esa foto.");
+  }
+});
+els.clearPhotoBtn.addEventListener("click", () => {
+  els.imageUrl.value = "";
+  clearLocalPhoto("Foto quitada.");
+  els.externalPhotoResults.querySelectorAll(".external-photo-option").forEach((button) => {
+    button.classList.remove("selected");
+  });
+  setExternalPhotoStatus("");
 });
 els.googleApiKey.addEventListener("change", saveGoogleConfig);
 els.googleSearchEngineId.addEventListener("change", saveGoogleConfig);

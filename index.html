@@ -62,6 +62,7 @@
             <form id="itemForm" class="item-form">
               <input id="itemId" type="hidden" />
               <input id="format" name="format" type="hidden" value="paperback" />
+              <input id="imageData" name="imageData" type="hidden" />
 
               <label>
                 <span>Titulo</span>
@@ -142,6 +143,22 @@
                 <span>Imagen por link o URL</span>
                 <input id="imageUrl" name="imageUrl" type="url" placeholder="https://..." />
               </label>
+
+              <div class="local-photo-panel">
+                <label>
+                  <span>Foto desde Descargas o archivos</span>
+                  <input id="imageFile" name="imageFile" type="file" accept="image/*" />
+                </label>
+                <div class="local-photo-preview" id="localPhotoPreview" hidden>
+                  <img id="imagePreview" alt="Vista previa de la foto seleccionada" />
+                </div>
+                <div class="local-photo-actions">
+                  <button class="secondary-btn" id="clearPhotoBtn" type="button">
+                    Quitar foto
+                  </button>
+                </div>
+                <p class="local-photo-status" id="localPhotoStatus" aria-live="polite"></p>
+              </div>
 
               <div class="external-photo-panel">
                 <label>

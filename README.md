@@ -6,7 +6,7 @@ Catalogo personal para organizar comics, mangas, figuras y otras compras futuras
 
 - Agregar items pendientes o conseguidos.
 - Guardar formato, prioridad, tienda, valor total, notas e imagen.
-- Usar imagen por URL o buscar fotos con Google Custom Search.
+- Usar imagen por URL, escoger una foto local desde archivos/Descargas o buscar fotos con Google Custom Search.
 - Filtrar, buscar, ordenar, editar y eliminar items.
 - Exportar e importar el catalogo en JSON.
 

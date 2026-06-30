@@ -422,6 +422,46 @@ textarea:focus {
   outline-offset: 2px;
 }
 
+.local-photo-panel {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  background: #fbfaf7;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.local-photo-preview {
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.local-photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.local-photo-actions {
+  display: flex;
+}
+
+.local-photo-actions .secondary-btn {
+  width: 100%;
+}
+
+.local-photo-status {
+  min-height: 1.25rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
 .primary-btn,
 .secondary-btn,
 .danger-btn {
