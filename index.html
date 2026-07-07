@@ -193,6 +193,23 @@
                   <input id="title" name="title" type="text" placeholder="Ej. Berserk Deluxe 1" required />
                 </label>
 
+                <div class="field-group barcode-panel">
+                  <span>Codigo de barras</span>
+                  <div class="barcode-entry">
+                    <input id="barcode" name="barcode" type="text" inputmode="numeric" autocomplete="off" placeholder="Ej. 978..." />
+                    <button class="secondary-btn" id="startBarcodeScanBtn" type="button">
+                      Escanear
+                    </button>
+                    <button class="secondary-btn" id="stopBarcodeScanBtn" type="button" hidden>
+                      Detener
+                    </button>
+                  </div>
+                  <div class="barcode-scanner" id="barcodeScanner" hidden>
+                    <video id="barcodeVideo" playsinline muted></video>
+                  </div>
+                  <p class="barcode-status" id="barcodeStatus" aria-live="polite"></p>
+                </div>
+
                 <div class="form-row">
                   <label>
                     <span>Tipo</span>
@@ -477,6 +494,7 @@
           </div>
           <h3></h3>
           <p class="meta-line"></p>
+          <p class="barcode-line"></p>
           <p class="price-line"></p>
           <div class="reading-progress-card" hidden>
             <div class="reading-progress-head">

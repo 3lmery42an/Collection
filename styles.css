@@ -729,6 +729,45 @@ textarea:focus {
   transition: width 180ms ease;
 }
 
+.barcode-panel {
+  padding: 12px;
+  background: var(--surface-band);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.barcode-entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+}
+
+.barcode-entry .secondary-btn {
+  min-width: 96px;
+}
+
+.barcode-scanner {
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  background: #05070a;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.barcode-scanner video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.barcode-status {
+  min-height: 1.25rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
 .image-panel {
   display: grid;
   gap: 10px;
@@ -1251,12 +1290,17 @@ textarea:focus {
 }
 
 .meta-line,
+.barcode-line,
 .price-line,
 .note-line {
   margin: 0;
   color: var(--muted);
   font-size: 0.88rem;
   line-height: 1.35;
+}
+
+.barcode-line {
+  font-weight: 900;
 }
 
 .price-line {
@@ -1486,6 +1530,14 @@ body[data-theme="dark"] .danger-btn:hover {
 
   .external-photo-actions {
     grid-template-columns: 1fr;
+  }
+
+  .barcode-entry {
+    grid-template-columns: 1fr;
+  }
+
+  .barcode-entry .secondary-btn {
+    width: 100%;
   }
 
   .local-photo-actions {

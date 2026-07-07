@@ -6,6 +6,7 @@ const THEME_STORAGE_KEY = "compras-geek-theme-v1";
 const VIEW_MODE_STORAGE_KEY = "compras-geek-view-mode-v1";
 const CLOUD_TABLE = "catalog_items";
 const SUPABASE_MODULE_URL = "https://esm.sh/@supabase/supabase-js@2";
+const ZXING_MODULE_URL = "https://esm.sh/@zxing/browser@0.2.1";
 const DEFAULT_APP_TITLE = "Compras Estupidas de Elmer.";
 
 const typeLabels = {
@@ -158,6 +159,14 @@ const state = {
     sort: "created-desc",
   },
   viewMode: localStorage.getItem(VIEW_MODE_STORAGE_KEY) === "list" ? "list" : "cards",
+  barcode: {
+    detector: null,
+    stream: null,
+    animationFrame: null,
+    zxingModule: null,
+    zxingReader: null,
+    zxingControls: null,
+  },
   cloud: {
     client: null,
     configSignature: "",
@@ -192,6 +201,12 @@ const els = {
   formTitle: document.querySelector("#formTitle"),
   itemId: document.querySelector("#itemId"),
   title: document.querySelector("#title"),
+  barcode: document.querySelector("#barcode"),
+  startBarcodeScanBtn: document.querySelector("#startBarcodeScanBtn"),
+  stopBarcodeScanBtn: document.querySelector("#stopBarcodeScanBtn"),
+  barcodeScanner: document.querySelector("#barcodeScanner"),
+  barcodeVideo: document.querySelector("#barcodeVideo"),
+  barcodeStatus: document.querySelector("#barcodeStatus"),
   type: document.querySelector("#type"),
   status: document.querySelector("#status"),
   priority: document.querySelector("#priority"),
@@ -475,6 +490,10 @@ function escapeSearch(value) {
   return String(value || "").trim().toLowerCase();
 }
 
+function cleanBarcode(value) {
+  return String(value || "").trim().replace(/\s+/g, "");
+}
+
 function getDefaultFormat(type = "comic") {
   return defaultFormatByType[type] || "paperback";
 }
@@ -674,6 +693,184 @@ function clearAllPhoto(message = "") {
   clearLocalPhoto(message);
 }
 
+function setBarcodeStatus(message) {
+  els.barcodeStatus.textContent = message;
+}
+
+function renderBarcodeScanner(isScanning) {
+  els.barcodeScanner.hidden = !isScanning;
+  els.startBarcodeScanBtn.disabled = isScanning;
+  els.stopBarcodeScanBtn.hidden = !isScanning;
+}
+
+async function getBarcodeDetector() {
+  if (!("BarcodeDetector" in window)) {
+    throw new Error("Este navegador no permite escanear aqui. Escribe el codigo manualmente.");
+  }
+
+  if (state.barcode.detector) {
+    return state.barcode.detector;
+  }
+
+  const BarcodeDetectorClass = window.BarcodeDetector;
+  const wantedFormats = ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "itf", "qr_code"];
+  const supportedFormats = typeof BarcodeDetectorClass.getSupportedFormats === "function"
+    ? await BarcodeDetectorClass.getSupportedFormats()
+    : [];
+  const formats = supportedFormats.length
+    ? wantedFormats.filter((format) => supportedFormats.includes(format))
+    : wantedFormats;
+
+  try {
+    state.barcode.detector = formats.length
+      ? new BarcodeDetectorClass({ formats })
+      : new BarcodeDetectorClass();
+  } catch {
+    state.barcode.detector = new BarcodeDetectorClass();
+  }
+
+  return state.barcode.detector;
+}
+
+async function loadZxingModule() {
+  if (!state.barcode.zxingModule) {
+    state.barcode.zxingModule = await import(ZXING_MODULE_URL);
+  }
+
+  return state.barcode.zxingModule;
+}
+
+function getZxingReader() {
+  if (state.barcode.zxingReader) {
+    return state.barcode.zxingReader;
+  }
+
+  const { BrowserMultiFormatReader } = state.barcode.zxingModule;
+  state.barcode.zxingReader = new BrowserMultiFormatReader();
+  return state.barcode.zxingReader;
+}
+
+function useDetectedBarcode(value) {
+  const detected = cleanBarcode(value);
+  if (!detected) return false;
+
+  els.barcode.value = detected;
+  setBarcodeStatus(`Codigo detectado: ${detected}`);
+  stopBarcodeScanner("");
+  return true;
+}
+
+function stopBarcodeScanner(message = "Escaneo detenido.") {
+  if (state.barcode.zxingControls) {
+    state.barcode.zxingControls.stop();
+    state.barcode.zxingControls = null;
+  }
+
+  if (state.barcode.animationFrame) {
+    cancelAnimationFrame(state.barcode.animationFrame);
+    state.barcode.animationFrame = null;
+  }
+
+  if (state.barcode.stream) {
+    state.barcode.stream.getTracks().forEach((track) => track.stop());
+    state.barcode.stream = null;
+  }
+
+  els.barcodeVideo.pause();
+  els.barcodeVideo.srcObject = null;
+  renderBarcodeScanner(false);
+
+  if (message) {
+    setBarcodeStatus(message);
+  }
+}
+
+async function scanBarcodeFrame() {
+  if (!state.barcode.stream || !state.barcode.detector) return;
+
+  try {
+    const codes = await state.barcode.detector.detect(els.barcodeVideo);
+    if (useDetectedBarcode(codes[0]?.rawValue)) {
+      return;
+    }
+  } catch {
+    setBarcodeStatus("No se pudo leer el codigo con la camara.");
+    stopBarcodeScanner("");
+    return;
+  }
+
+  state.barcode.animationFrame = requestAnimationFrame(scanBarcodeFrame);
+}
+
+async function startNativeBarcodeScanner() {
+  const detector = await getBarcodeDetector();
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: {
+      facingMode: { ideal: "environment" },
+    },
+    audio: false,
+  });
+
+  state.barcode.detector = detector;
+  state.barcode.stream = stream;
+  els.barcodeVideo.srcObject = stream;
+  renderBarcodeScanner(true);
+  setBarcodeStatus("Escaneando...");
+  await els.barcodeVideo.play();
+  scanBarcodeFrame();
+}
+
+async function startZxingBarcodeScanner() {
+  renderBarcodeScanner(true);
+  setBarcodeStatus("Cargando lector externo...");
+  await loadZxingModule();
+  const reader = getZxingReader();
+
+  const controls = await reader.decodeFromConstraints(
+    {
+      video: {
+        facingMode: { ideal: "environment" },
+      },
+      audio: false,
+    },
+    els.barcodeVideo,
+    (result, error, controlsFromCallback) => {
+      const rawValue = typeof result?.getText === "function" ? result.getText() : result?.text;
+      if (useDetectedBarcode(rawValue)) {
+        controlsFromCallback?.stop();
+      }
+    },
+  );
+
+  state.barcode.zxingControls = controls;
+  setBarcodeStatus("Escaneando...");
+}
+
+async function startBarcodeScanner() {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    setBarcodeStatus("Este navegador no permite usar la camara aqui.");
+    return;
+  }
+
+  stopBarcodeScanner("");
+
+  try {
+    if ("BarcodeDetector" in window) {
+      try {
+        await startNativeBarcodeScanner();
+        return;
+      } catch {
+        stopBarcodeScanner("");
+      }
+    }
+
+    await startZxingBarcodeScanner();
+  } catch (error) {
+    stopBarcodeScanner("");
+    setBarcodeStatus(error.message || "No se pudo abrir la camara. Escribe el codigo manualmente.");
+  }
+}
+
 async function processImageFile(file, message = "Foto local lista.") {
   if (!file) return;
 
@@ -836,6 +1033,7 @@ function normalizeItem(item) {
   return {
     id: item.id || createId(),
     title: String(item.title || "").trim(),
+    barcode: cleanBarcode(item.barcode),
     type,
     status: ["wishlist", "owned"].includes(item.status) ? item.status : "wishlist",
     readingStatus: normalizeReadingStatus(item.readingStatus, type),
@@ -864,6 +1062,7 @@ function getVisibleItems() {
       const matchesReading = state.filters.reading === "all" || item.readingStatus === state.filters.reading;
       const haystack = [
         item.title,
+        item.barcode,
         item.series,
         item.store,
         item.notes,
@@ -1007,6 +1206,7 @@ function renderCatalog() {
     const readingPill = card.querySelector(".reading-pill");
     const title = card.querySelector("h3");
     const meta = card.querySelector(".meta-line");
+    const barcode = card.querySelector(".barcode-line");
     const price = card.querySelector(".price-line");
     const readingProgressCard = card.querySelector(".reading-progress-card");
     const progressPages = card.querySelector(".progress-pages");
@@ -1048,6 +1248,8 @@ function renderCatalog() {
     meta.textContent = [item.series, item.store, item.acquiredDate ? `Conseguido: ${item.acquiredDate}` : ""]
       .filter(Boolean)
       .join(" | ");
+    barcode.textContent = item.barcode ? `Codigo: ${item.barcode}` : "";
+    barcode.hidden = !item.barcode;
     price.textContent = `Valor item: ${formatMoney(item.price)}`;
     const progress = getReadingProgress(item);
     readingProgressCard.hidden = !isReadableType(item.type);
@@ -1077,6 +1279,7 @@ function render() {
 }
 
 function resetForm() {
+  stopBarcodeScanner("");
   els.form.reset();
   els.itemId.value = "";
   els.formTitle.textContent = "Nuevo item";
@@ -1087,6 +1290,8 @@ function resetForm() {
   els.pagesRead.value = "";
   els.totalPages.value = "";
   els.readingMinutes.value = "";
+  els.barcode.value = "";
+  setBarcodeStatus("");
   renderProgressPreview();
   els.priority.value = "";
   setFormat(getDefaultFormat(els.type.value));
@@ -1105,6 +1310,7 @@ async function handleSubmit(event) {
   const item = normalizeItem({
     id: id || createId(),
     title: els.title.value,
+    barcode: els.barcode.value,
     type: els.type.value,
     status: els.status.value,
     readingStatus: els.readingStatus.value,
@@ -1146,6 +1352,8 @@ function editItem(id) {
 
   els.itemId.value = item.id;
   els.title.value = item.title;
+  els.barcode.value = item.barcode || "";
+  setBarcodeStatus(item.barcode ? "Codigo cargado." : "");
   els.type.value = item.type;
   els.status.value = item.status;
   setReadingStatus(item.readingStatus);
@@ -1595,6 +1803,15 @@ els.clearFormBtn.addEventListener("click", resetForm);
 els.cancelEditBtn.addEventListener("click", resetForm);
 els.exportBtn.addEventListener("click", exportData);
 els.importFile.addEventListener("change", (event) => importData(event.target.files[0]));
+els.barcode.addEventListener("input", () => {
+  const cleaned = cleanBarcode(els.barcode.value);
+  if (els.barcode.value !== cleaned) {
+    els.barcode.value = cleaned;
+  }
+  setBarcodeStatus(cleaned ? "Codigo listo." : "");
+});
+els.startBarcodeScanBtn.addEventListener("click", startBarcodeScanner);
+els.stopBarcodeScanBtn.addEventListener("click", () => stopBarcodeScanner());
 els.type.addEventListener("change", () => {
   setFormat(getDefaultFormat(els.type.value));
   setReadingStatus(els.readingStatus.value);
@@ -1689,6 +1906,7 @@ els.viewModeToggle.addEventListener("click", (event) => {
   localStorage.setItem(VIEW_MODE_STORAGE_KEY, state.viewMode);
   render();
 });
+window.addEventListener("beforeunload", () => stopBarcodeScanner(""));
 
 applyTheme(localStorage.getItem(THEME_STORAGE_KEY) || "light", false);
 loadAppTitle();

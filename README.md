@@ -27,7 +27,8 @@ Pendiente agregar capturas de pantalla de:
 
 - Agregar comics, mangas, libros y figuras.
 - Clasificar articulos como pendientes o conseguidos.
-- Guardar precio, tienda, serie/linea, fecha, notas e imagen.
+- Guardar precio, tienda, serie/linea, fecha, notas, codigo de barras e imagen.
+- Escanear codigos de barras con camara compatible o escribirlos manualmente.
 - Asignar prioridad: alta, media o baja.
 - Registrar estado de lectura: no leido, por leer, leyendo o leido.
 - Guardar paginas leidas, total de paginas, tiempo leido y porcentaje de progreso.
@@ -50,6 +51,7 @@ Pendiente agregar capturas de pantalla de:
 - GitHub Pages
 - Supabase Auth y Database, opcional para sincronizacion en la nube
 - Google Custom Search API, opcional para busqueda de imagenes
+- BarcodeDetector API y ZXing Browser, opcional para escaneo de codigos de barras
 
 ## Instalacion local
 
@@ -72,10 +74,11 @@ Abre `index.html` en el navegador o usa una extension como Live Server.
 1. Completa el formulario con los datos del articulo.
 2. Selecciona tipo, estado, prioridad y formato.
 3. Si es comic, manga o libro, agrega paginas leidas, total de paginas y tiempo leido.
-4. Anade una imagen por URL, archivo local o busqueda externa.
-5. Guarda el articulo.
-6. Usa los filtros y la busqueda para organizar el catalogo.
-7. Exporta tu catalogo como respaldo JSON.
+4. Escribe el codigo de barras manualmente o usa `Escanear` para leerlo con la camara.
+5. Anade una imagen por URL, archivo local o busqueda externa.
+6. Guarda el articulo.
+7. Usa los filtros y la busqueda para organizar el catalogo.
+8. Exporta tu catalogo como respaldo JSON.
 
 ## Backup y transferencia de datos
 
